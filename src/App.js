@@ -1,11 +1,13 @@
 import Footer from "./components/Footer";
 import Input from "./components/Input";
 import Successful from "./components/Successful";
-import { useEffect, useState } from 'react';
+import { useState, useCallback } from 'react';
 import Uploading from "./components/Uploading";
-import { storage, app} from './api/firebase';
+
 //import { ref, uploadBytes, listAll, getDownloadURL } from 'firebase/storage';
-import { v4 } from 'uuid';
+//import { v4 } from 'uuid';
+import { useDropzone } from 'react-dropzone';
+import React from 'react';
 
 
 
@@ -13,13 +15,17 @@ function App() {
 
   const [imageURL, setImageURL] = useState(null);
   const [image, setImage] = useState(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [progress, setProgress] = useState(0);
+  const [loaded, setLoaded] = useState(false);
+
+  //const [isLoading, setIsLoading] = useState(false);
+  //const [error, setError] = useState(null);
   //const [imageList, setImageList] = useState([]);
+
+  const types = ['image/png', 'image/jpeg'];
 
   // This is a reference to all the files
   // const imageListRef = ref(storage, "images/");
-  /*
+ /* 
   useEffect(() => {
     listAll(imageListRef).then((response) => {
       //console.log(response);
@@ -29,62 +35,36 @@ function App() {
         });
       });
     });
+
+
   }, []);
-*/
-
-
+  */
   const handleChange = (e) => {
     e.preventDefault();
-    if(e.target.files[0]) {
+    let selected = e.target.files[0];
+    if( selected && types.includes(selected.type) ) {
+      setLoaded(true);
       setImage(e.target.files[0]);
-      changeLoading()
-      handleUpload();
+      
+    } else {
+      setImage(null);
+      //setError("Please select an image file (png or jpeg)");
     }
 
   }
 
-  const changeLoading = () => {
-    if (image){
-      setIsLoading(true);
-    }
-  }
-
-
-  const handleUpload = () => {
-    const uploadTask = storage.ref(`images/${image.name + v4()}`).put(image);
-    uploadTask.on(
-      "state_changed",
-      snapshot => {
-        const progress = Math.round(
-          (snapshot.bytesTransferred / snapshot.totalButes) * 100
-        );
-        setProgress(progress);
-      },
-      error => {
-        console.log(error);
-      },
-      () => {
-        storage
-           .ref("images")
-           .child(image.name)
-           .getDownloadURL()
-           .then(url => {
-            console.log(url);
-            setImageURL(url);
-           });
-      }
-    );
-  };
 
  
   return (
     <div className="bg-[#c7b3b3]">
-        { !isLoading && <Input handleChange={handleChange} /> }
-        { isLoading && !imageURL && <Uploading progress={progress} /> }
+
+        {!loaded &&<Input handleChange={handleChange} setImage={setImage} setLoaded={setLoaded}/> }
+        { image && <Uploading image={image} setImageURL={setImageURL} setImage={setImage} /> }
         { imageURL && <Successful imageURL={imageURL} /> }
         <Footer />
     </div>
   );
+  
 }
 
 export default App;
